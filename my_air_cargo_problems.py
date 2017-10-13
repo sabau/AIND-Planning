@@ -48,12 +48,6 @@ class AirCargoProblem(Problem):
             list of Action objects
         """
 
-        # TODO create concrete Action objects based on the domain action schema for: Load, Unload, and Fly
-        # concrete actions definition: specific literal action that does not include variables as with the schema
-        # for example, the action schema 'Load(c, p, a)' can represent the concrete actions 'Load(C1, P1, SFO)'
-        # or 'Load(C2, P2, JFK)'.  The actions for the planning problem must be concrete because the problems in
-        # forward search and Planning Graphs must use Propositional Logic
-
         def load_actions():
             """Create all concrete Load actions and return a list
             Action(Load(c, p, a),
@@ -62,7 +56,6 @@ class AirCargoProblem(Problem):
             :return: list of Action objects
             """
             loads = []
-            # TODO create all load ground actions from the domain Load action
             for c in self.cargos:
                 for a in self.airports:
                     for p in self.planes:
@@ -87,7 +80,6 @@ class AirCargoProblem(Problem):
             :return: list of Action objects
             """
             unloads = []
-            # TODO create all Unload ground actions from the domain Unload action
             for c in self.cargos:
                 for a in self.airports:
                     for p in self.planes:
@@ -160,7 +152,6 @@ class AirCargoProblem(Problem):
         :param action: Action applied
         :return: resulting state after action
         """
-        # TODO implement
         new_state = FluentState([], [])
 
         old_state = decode_state(state, self.state_map)
@@ -216,16 +207,11 @@ class AirCargoProblem(Problem):
         conditions by ignoring the preconditions required for an action to be
         executed.
         """
-        # TODO implement (see Russell-Norvig Ed-3 10.2.3  or Russell-Norvig Ed-2 11.2)
         # get the propositional logic library and add the current states positive sentences
         kb = PropKB()
         kb.tell(decode_state(node.state, self.state_map).pos_sentence())
-        # Count and return the number of failing clauses
-        count = 0
-        for clause in self.goal:
-            if clause not in kb.clauses:
-                count += 1
-        return count
+        # return the number of actions in my goal that are not in this node clauses
+        return len(set(self.goal) - set(kb.clauses))
 
 
 def air_cargo_p1() -> AirCargoProblem:
@@ -263,7 +249,6 @@ def air_cargo_p1() -> AirCargoProblem:
 
 
 def air_cargo_p2() -> AirCargoProblem:
-    # TODO implement Problem 2 definition
     """
     Init(At(C1, SFO) ∧ At(C2, JFK) ∧ At(C3, ATL)
         ∧ At(P1, SFO) ∧ At(P2, JFK) ∧ At(P3, ATL)
@@ -318,7 +303,6 @@ def air_cargo_p2() -> AirCargoProblem:
 
 
 def air_cargo_p3() -> AirCargoProblem:
-    # TODO implement Problem 3 definition
     """
     Init(At(C1, SFO) ∧ At(C2, JFK) ∧ At(C3, ATL) ∧ At(C4, ORD)
         ∧ At(P1, SFO) ∧ At(P2, JFK)
