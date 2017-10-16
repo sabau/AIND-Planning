@@ -121,4 +121,5 @@ pl.subplots_adjust(top=0.92, bottom=0.08, left=0.10, right=0.95, hspace=0.25,
 pl.savefig('p1.png')
 
 
+# timeout 100s for all the following
 # python run_search.py -p 3 -s 1 > p3.results.1 ; python run_search.py -p 3 -s 2 > p3.results.2 ; python run_search.py -p 3 -s 3 > p3.results.3 ; python run_search.py -p 3 -s 9 > p3.results.9 ; python run_search.py -p 3 -s 8 > p3.results.8 ; python run_search.py -p 3 -s 7 > p3.results.7 ; python run_search.py -p 3 -s 6 > p3.results.6 ; python run_search.py -p 3 -s 5 > p3.results.5 ; python run_search.py -p 3 -s 4 > p3.results.4 ;
