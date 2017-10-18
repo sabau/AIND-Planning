@@ -131,14 +131,13 @@ class AirCargoProblem(Problem):
         kb = PropKB()
         kb.tell(decode_state(state, self.state_map).pos_sentence())
         for action in self.actions_list:
-            is_possible = True
-            for clause in action.precond_pos:
-                if clause not in kb.clauses:
-                    is_possible = False
-            for clause in action.precond_neg:
-                if clause in kb.clauses:
-                    is_possible = False
-            if is_possible:
+            pos = set(action.precond_pos)
+            neg = set(action.precond_neg)
+            clauses = set(kb.clauses)
+
+            # I expect all my positive effect to be also in the clauses
+            # and none of my negative ones to be in the clauses
+            if len(pos.intersection(clauses)) == len(pos) and len(neg.intersection(clauses)) == 0:
                 possible_actions.append(action)
         return possible_actions
 
@@ -151,23 +150,33 @@ class AirCargoProblem(Problem):
         :param action: Action applied
         :return: resulting state after action
         """
-        new_state = FluentState([], [])
+        # define the resulting state
+        resulting_state = FluentState([], [])
 
-        old_state = decode_state(state, self.state_map)
-        for fluent in old_state.pos:
+        # the previous state
+        p_state = decode_state(state, self.state_map)
+        for fluent in p_state.pos:
             if fluent not in action.effect_rem:
-                new_state.pos.append(fluent)
-        for fluent in action.effect_add:
-            if fluent not in new_state.pos:
-                new_state.pos.append(fluent)
-        for fluent in old_state.neg:
-            if fluent not in action.effect_add:
-                new_state.neg.append(fluent)
-        for fluent in action.effect_rem:
-            if fluent not in new_state.neg:
-                new_state.neg.append(fluent)
+                # each positive fluent not removed by my action, stays in the resulting state
+                resulting_state.pos.append(fluent)
 
-        return encode_state(new_state, self.state_map)
+        for fluent in action.effect_add:
+            if fluent not in resulting_state.pos:
+                # each effect added by my action that is not in the resulting state yet, has to be added
+                resulting_state.pos.append(fluent)
+
+        for fluent in p_state.neg:
+            if fluent not in action.effect_add:
+                # every negative fluent that was not affected by my action is still applied to the resulting state
+                resulting_state.neg.append(fluent)
+
+        for fluent in action.effect_rem:
+            if fluent not in resulting_state.neg:
+                # every negative effect my action will have has to be added to my resulting state,
+                # if is not already there
+                resulting_state.neg.append(fluent)
+
+        return encode_state(resulting_state, self.state_map)
 
     def goal_test(self, state: str) -> bool:
         """ Test the state to see if goal is reached
@@ -177,10 +186,8 @@ class AirCargoProblem(Problem):
         """
         kb = PropKB()
         kb.tell(decode_state(state, self.state_map).pos_sentence())
-        for clause in self.goal:
-            if clause not in kb.clauses:
-                return False
-        return True
+        # I reach the goal if my clauses encloses all the goals
+        return len(set(self.goal).intersection(set(kb.clauses))) == len(self.goal)
 
     def h_1(self, node: Node):
         # note that this is not a true heuristic
@@ -210,7 +217,7 @@ class AirCargoProblem(Problem):
         kb = PropKB()
         kb.tell(decode_state(node.state, self.state_map).pos_sentence())
         # return the number of actions in my goal that are not in this node clauses
-        return len(set(self.goal) - set(kb.clauses))
+        return len(set(self.goal).difference(set(kb.clauses)))
 
 
 def air_cargo_p1() -> AirCargoProblem:
@@ -350,12 +357,12 @@ def air_cargo_p3() -> AirCargoProblem:
         expr('At(P1, ORD)'),
         expr('At(P2, SFO)'),
         expr('At(P2, ATL)'),
-        expr('At(P1, ORD)'),
+        expr('At(P2, ORD)'),
     ]
     init = FluentState(pos, neg)
     goal = [expr('At(C1, JFK)'),
-            expr('At(C3, JFK)'),
             expr('At(C2, SFO)'),
+            expr('At(C3, JFK)'),
             expr('At(C4, SFO)'),
             ]
     return AirCargoProblem(cargos, planes, airports, init, goal)
