@@ -20,9 +20,11 @@ def graph(problem, nr):
             n.append(problem[k]['new_nodes'])
             t.append(problem[k]['time'])
             colours.append('g' if problem[k]['plan'] == min_plan else 'r')
+            print(k, problem[k]['expansions'], problem[k]['goal_tests'], problem[k]['new_nodes'], problem[k]['time'], problem[k]['plan'])
     x = range(len(keys))
 
     pl.figure(nr, figsize=(10.24, 7.4))
+    pl.suptitle('Problem {}'.format(nr))
 
     pl.subplot(221)
     pl.bar(x, e, color=colours, align="center")

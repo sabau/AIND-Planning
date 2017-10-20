@@ -414,10 +414,10 @@ class PlanningGraph():
         :return: bool
         """
 
-        if len(set(node_a1.action.effect_add).intersection(set(node_a2.action.effect_rem))) > 0:
-            return True
-
-        if len(set(node_a2.action.effect_add).intersection(set(node_a1.action.effect_rem))) > 0:
+        # action1 added effect should overlap with action 2 removing effects
+        # or the other way around
+        if len(set(node_a1.action.effect_add).intersection(set(node_a2.action.effect_rem))) > 0 or \
+           len(set(node_a2.action.effect_add).intersection(set(node_a1.action.effect_rem))) > 0:
             return True
 
         return False
@@ -437,6 +437,7 @@ class PlanningGraph():
         :return: bool
         """
         # We can play with sets, intersections will mean overlapping effects VS preconditions
+        # if any of the following couple of sets overlaps, then we have interferences between actions
         if len(set(node_a1.action.effect_add).intersection(set(node_a2.action.precond_neg))) > 0 or \
             len(set(node_a2.action.effect_add).intersection(set(node_a1.action.precond_neg))) > 0 or \
             len(set(node_a1.action.effect_rem).intersection(set(node_a2.action.precond_pos))) > 0 or \
@@ -513,7 +514,7 @@ class PlanningGraph():
         :param node_s2: PgNode_s
         :return: bool
         """
-        # Check that every s1 precondition is mutually exclusive with every s2 precondition
+        # Check that every s1 precondition is mutually exclusive with every s2 preconditios
         for s1_pre in node_s1.parents:
             for s2_pre in node_s2.parents:
                 if not s1_pre.is_mutex(s2_pre):
@@ -521,22 +522,28 @@ class PlanningGraph():
 
         return True
 
+
     def h_levelsum(self) -> int:
         """The sum of the level costs of the individual goals (admissible if goals independent)
 
         :return: int
         """
         level_sum = 0
-        # for each goal in the problem, determine the level cost, then add them together
-
+        # for each goal in the problem, determine the level cost, then add them togethers
         for goal in self.problem.goal:
-            for level in range(len(self.s_levels)):
-                for state in self.s_levels[level]:
-                    if goal == state.symbol and state.is_pos:
-                        level_sum += level
-                        break
-                else:
-                    continue
-                break
+            level_sum += self.find_level(goal)
 
         return level_sum
+
+    def find_level(self, goal) -> int:
+        """search which level will grant this goal with the correct positive state
+
+        :return: int
+        """
+        for level in range(len(self.s_levels)):
+            for state in self.s_levels[level]:
+                if goal == state.symbol and state.is_pos:
+                    return level
+        # if no level satisfy this goal, return 0,
+        # this may be confising as 0 is the same as finding the goal in the first level
+        return 0
